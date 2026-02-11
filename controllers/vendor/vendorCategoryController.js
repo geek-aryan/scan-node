@@ -121,11 +121,54 @@ const updateVendorCategory = async (req, res) => {
     }
 };
 
+const updateVendorSubCategory = async (req, res) => {
+    try {
+        const { name, imageAlt, status, sequenceNo = 1000 } = req.body;
+        const { id } = req.params;
+
+        if (!name) {
+            return errorResponse({ res, error: 'Name is required', status: 422 });
+        }
+
+        // Build update object dynamically
+        const updateData = {
+            name,
+            imageAlt,
+            status,
+            sequenceNo
+        };
+
+        // Only update image if file exists
+        if (req.file) {
+            updateData.image = req.file.filename;
+        }
+
+        const updatedCategory = await VendorCategory.update(updateData, {
+            where: { id }
+        });
+
+        return successResponse({
+            res,
+            data: updatedCategory,
+            message: 'Vendor category updated successfully',
+            status: 200
+        });
+
+    } catch (error) {
+        console.error('Error updating vendor category:', error);
+        return errorResponse({
+            res,
+            error: 'Failed to update vendor category',
+            status: 500
+        });
+    }
+};
 
 module.exports = {
     addVendorCategory,
     addVendorSubCategory,
     getVendorSubCategories,
     getVendorCategories,
-    updateVendorCategory
+    updateVendorCategory,
+    updateVendorSubCategory
 };
