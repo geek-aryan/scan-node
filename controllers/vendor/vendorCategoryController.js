@@ -54,7 +54,7 @@ const getVendorSubCategories = async (req, res) => {
             where: {
                 parentCategoryId,
             },
-            attributes: ['id', 'name', 'image']
+            attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
         });
         return successResponse({ res, data: subCategories, message: 'Vendor sub categories fetched successfully', status: 200 });
     } catch (error) {
