@@ -29,6 +29,27 @@ const getMenuItemsByCategory = async (req, res) => {
     }
 };
 
+const updateMenuItem = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const image = req.file ? req.file.filename : null;
+        if(image){
+            req.body.image = image;
+        }
+        const menuItem = await VendorMenuItems.findByPk(id);
+        if(!menuItem) return errorResponse({res, error: 'Menu item not found!', status: 404});
+        await menuItem.update(req.body);
+        return successResponse({res, data: menuItem, message: 'Menu item updated successfully'});
+    } catch (error) {
+        console.log(error);
+        return errorResponse({res, error, status: 400});
+    }
+};
+
+
+
 module.exports = {
     getMenuItemsByCategory,
+    updateMenuItem,
+
 };

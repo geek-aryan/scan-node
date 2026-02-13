@@ -53,6 +53,7 @@ const getVendorSubCategories = async (req, res) => {
         const subCategories = await VendorCategory.findAll({
             where: {
                 parentCategoryId,
+                status: 1,
             },
             attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
         });
@@ -61,9 +62,25 @@ const getVendorSubCategories = async (req, res) => {
         console.error('Error adding vendor category');
         return errorResponse({ res, error: 'Failed to add vendor category', status: 500 });
     }
-}
+};
 
 const getVendorCategories = async (req, res) => {
+    try {
+        const categories = await VendorCategory.findAll({
+            where: {
+                parentCategoryId: null,
+                status: 1,
+            },
+            attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
+        });
+        return successResponse({ res, data: categories, message: 'Vendor categories fetched successfully', status: 200 });
+    } catch (error) {
+        console.error('Error fetching vendor categories:', error);
+        return errorResponse({ res, error: 'Failed to fetch vendor categories', status: 500 });
+    }
+};
+
+const getAllVendorCategories = async (req, res) => {
     try {
         const categories = await VendorCategory.findAll({
             where: {
@@ -75,6 +92,22 @@ const getVendorCategories = async (req, res) => {
     } catch (error) {
         console.error('Error fetching vendor categories:', error);
         return errorResponse({ res, error: 'Failed to fetch vendor categories', status: 500 });
+    }
+};
+
+const getVendorCategoryById = async (req, res) => {
+    try {
+        const { id } = req.query;
+        const category = await VendorCategory.findByPk(id, {
+            attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
+        });
+        if (!category) {
+            return errorResponse({ res, error: 'Vendor category not found', status: 404 });
+        }
+        return successResponse({ res, data: category, message: 'Vendor category fetched successfully', status: 200 });
+    } catch (error) {
+        console.error('Error fetching vendor category:', error);
+        return errorResponse({ res, error: 'Failed to fetch vendor category', status: 500 });
     }
 };
 
@@ -164,11 +197,16 @@ const updateVendorSubCategory = async (req, res) => {
     }
 };
 
+
+
 module.exports = {
     addVendorCategory,
     addVendorSubCategory,
     getVendorSubCategories,
     getVendorCategories,
+    getAllVendorCategories,
+    getVendorCategoryById,
     updateVendorCategory,
-    updateVendorSubCategory
+    updateVendorSubCategory,
+    
 };

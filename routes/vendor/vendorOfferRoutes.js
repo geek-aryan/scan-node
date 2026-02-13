@@ -4,6 +4,8 @@ const { adminAuth } = require('../../middlewares/auth');
 
 
 router.post('/create-vendor-offer', adminAuth, vendorOfferController.createVendorOffer);
+router.put('/update-vendor-offer/:id', adminAuth, vendorOfferController.updateVendorOffer);
+router.get('/get-vendor-offer-by-id/:id', vendorOfferController.getVendorOfferById);
 router.post('/map-offer-to-vendors', adminAuth, vendorOfferController.mapOfferToVendors);
 router.get('/get-offers-by-offer-category', vendorOfferController.getOffersByOfferCategory);
 router.get('/get-vendor-by-offer-id', vendorOfferController.getVendorsByOfferId);

@@ -25,6 +25,8 @@ router.post('/add-vendor-category', adminAuth, uploadVendorCategoryImage.single(
 router.post('/add-vendor-sub-category', adminAuth, uploadVendorCategoryImage.single('image'), vendorCategoryController.addVendorSubCategory);
 router.get('/get-vendor-sub-categories', vendorCategoryController.getVendorSubCategories);
 router.get('/get-vendor-categories', vendorCategoryController.getVendorCategories);
+router.get('/get-all-vendor-categories', vendorCategoryController.getAllVendorCategories);
+router.get('/get-vendor-category-by-id', vendorCategoryController.getVendorCategoryById);
 router.put('/update-vendor-category/:id', adminAuth, uploadVendorCategoryImage.single('image'), vendorCategoryController.updateVendorCategory);
 router.put('/update-vendor-sub-category/:id', adminAuth, uploadVendorCategoryImage.single('image'), vendorCategoryController.updateVendorSubCategory);
 

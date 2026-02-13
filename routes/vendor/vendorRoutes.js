@@ -20,6 +20,9 @@ const uploadVendorImage = createUploader({
 
 
 router.post('/add-vendor', adminAuth, uploadVendorImage.single('image'), vendorController.addVendor);
+router.put('/update-vendor/:id', adminAuth, uploadVendorImage.single('image'), vendorController.updateVendor);
+router.get('/get-vendor-by-id/:id', userAuth, vendorController.getVendorById);
+router.get('/get-all-vendors', vendorController.getAllVendors);
 router.get('/get-nearby-vendors-by-category-id', vendorController.getNearByVendorsByCategoryId);
 router.get('/get-vendor-details-by-id', userAuth, vendorController.getVendorInfoById);
 router.post('/add-vendor-menu', adminAuth, uploadVendorImage.single('image'), vendorController.addVendorMenu);

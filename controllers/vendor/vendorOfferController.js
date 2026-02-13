@@ -15,6 +15,35 @@ const createVendorOffer = async (req, res) => {
     }
 };
 
+const updateVendorOffer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const offer = await VendorOffer.findByPk(id);
+        if (!offer) {
+            return errorResponse({ res, message: 'Offer not found!', status: 404 });
+        }
+        await offer.update(req.body);
+        return successResponse({ res, data: offer, message: 'Vendor Offer updated successfully' });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error, status: 400 });
+    }
+};
+
+const getVendorOfferById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const offer = await VendorOffer.findByPk(id);
+        if (!offer) {
+            return errorResponse({ res, message: 'Offer not found!', status: 404 });
+        }
+        return successResponse({ res, data: offer, message: 'Vendor Offer fetched successfully' });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error, status: 400 });
+    }
+};
+
 const mapOfferToVendors = async (req, res) => {
     try {
         const { offerId, vendorIds } = req.body;
@@ -186,7 +215,7 @@ const searchVendorOffers = async (req, res) => {
             }
         });
         const vendorIds = vendors.map(vendor => vendor.id);
-                
+
         const offerIds = offers.map(offer => offer.id);
         const mappings = await VendorOfferMapping.findAll({
             where: {
@@ -220,6 +249,8 @@ const searchVendorOffers = async (req, res) => {
 
 module.exports = {
     createVendorOffer,
+    updateVendorOffer,
+    getVendorOfferById,
     mapOfferToVendors,
     getOffersByOfferCategory,
     getVendorsByOfferId,
