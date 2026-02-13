@@ -99,7 +99,8 @@ const getAllVendors = async (req, res) => {
         'websiteLink',
         'otherLink',
         'latitude',
-        'longitude'
+        'longitude',
+        'status'
       ]
     });
     return successResponse({ res, data: vendors, message: 'Vendors fetched successfully', status: 200 });

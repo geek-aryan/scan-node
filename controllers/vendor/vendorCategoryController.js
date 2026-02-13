@@ -1,3 +1,4 @@
+const { Sequelize } = require('sequelize');
 const VendorCategory = require('../../models/vendor/vendorCategory');
 const { successResponse, errorResponse } = require('../../utils/responseUtils');
 
@@ -66,19 +67,54 @@ const getVendorSubCategories = async (req, res) => {
 
 const getVendorCategories = async (req, res) => {
     try {
+
         const categories = await VendorCategory.findAll({
             where: {
                 parentCategoryId: null,
-                status: 1,
             },
-            attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
+            attributes: [
+                'id',
+                'name',
+                'image',
+                'status',
+                'sequenceNo',
+                'createdAt',
+                [
+                    Sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM vendor_categories AS sub
+                        WHERE sub.parentCategoryId = vendor_category.id
+                    )`),
+                    'subCategoryCount'
+                ]
+            ]
         });
-        return successResponse({ res, data: categories, message: 'Vendor categories fetched successfully', status: 200 });
+
+        const formatted = categories.map(cat => {
+            const data = cat.toJSON();
+            return {
+                ...data,
+                hasSubcategory: Number(data.subCategoryCount) > 0
+            };
+        });
+
+        return successResponse({
+            res,
+            data: formatted,
+            message: 'Vendor categories fetched successfully',
+            status: 200
+        });
+
     } catch (error) {
         console.error('Error fetching vendor categories:', error);
-        return errorResponse({ res, error: 'Failed to fetch vendor categories', status: 500 });
+        return errorResponse({
+            res,
+            error: 'Failed to fetch vendor categories',
+            status: 500
+        });
     }
 };
+
 
 const getAllVendorCategories = async (req, res) => {
     try {
@@ -86,12 +122,46 @@ const getAllVendorCategories = async (req, res) => {
             where: {
                 parentCategoryId: null,
             },
-            attributes: ['id', 'name', 'image', 'hasSubcategory', 'status', 'sequenceNo', 'createdAt']
+            attributes: [
+                'id',
+                'name',
+                'image',
+                'status',
+                'sequenceNo',
+                'createdAt',
+                [
+                    Sequelize.literal(`(
+                        SELECT COUNT(*)
+                        FROM vendor_categories AS sub
+                        WHERE sub.parentCategoryId = vendor_category.id
+                    )`),
+                    'subCategoryCount'
+                ]
+            ]
         });
-        return successResponse({ res, data: categories, message: 'Vendor categories fetched successfully', status: 200 });
+
+        const formatted = categories.map(cat => {
+            const data = cat.toJSON();
+            return {
+                ...data,
+                hasSubcategory: Number(data.subCategoryCount) > 0
+            };
+        });
+
+        return successResponse({
+            res,
+            data: formatted,
+            message: 'Vendor categories fetched successfully',
+            status: 200
+        });
+
     } catch (error) {
         console.error('Error fetching vendor categories:', error);
-        return errorResponse({ res, error: 'Failed to fetch vendor categories', status: 500 });
+        return errorResponse({
+            res,
+            error: 'Failed to fetch vendor categories',
+            status: 500
+        });
     }
 };
 
@@ -208,5 +278,5 @@ module.exports = {
     getVendorCategoryById,
     updateVendorCategory,
     updateVendorSubCategory,
-    
+
 };

@@ -31,8 +31,6 @@ const VendorMenuItems = sequelize.define('vendor_menu_item', {
   },
   category: {
     type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'Lunch'
   },
   itemName: {
     type: DataTypes.STRING,
@@ -59,9 +57,9 @@ const VendorMenuItems = sequelize.define('vendor_menu_item', {
   },
   image: {
     type: DataTypes.STRING,
-    get(){
-        const imageUrl = this.getDataValue('image');
-        return imageUrl ? `${process.env.BACKEND_URL}/uploads/${imageUrl}` : null;
+    get() {
+      const imageUrl = this.getDataValue('image');
+      return imageUrl ? `${process.env.BACKEND_URL}/uploads/${imageUrl}` : null;
     }
   },
   imageAlt: {

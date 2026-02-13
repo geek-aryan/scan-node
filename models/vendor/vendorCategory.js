@@ -14,9 +14,9 @@ const VendorCategory = sequelize.define('vendor_category', {
   },
   image: {
     type: DataTypes.STRING,
-    get(){
-        const imageUrl = this.getDataValue('image');
-        return imageUrl ? `${process.env.BACKEND_URL}/uploads/${imageUrl}` : null;
+    get() {
+      const imageUrl = this.getDataValue('image');
+      return imageUrl ? `${process.env.BACKEND_URL}/uploads/${imageUrl}` : null;
     }
   },
   imageAlt: {
@@ -40,6 +40,14 @@ const VendorCategory = sequelize.define('vendor_category', {
     defaultValue: true,
   },
 }, { timestamps: true });
+VendorCategory.hasMany(VendorCategory, {
+  as: "subcategories",
+  foreignKey: "parentCategoryId"
+});
 
+VendorCategory.belongsTo(VendorCategory, {
+  as: "parent",
+  foreignKey: "parentCategoryId"
+});
 
 module.exports = VendorCategory;
