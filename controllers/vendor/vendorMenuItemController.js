@@ -28,6 +28,7 @@ const getMenuItemsByCategory = async (req, res) => {
         return errorResponse({ res, error, status: 400 });
     }
 };
+
 const getMenuItemsByVendor = async (req, res) => {
     try {
         const { vendorId } = req.query;
@@ -39,7 +40,7 @@ const getMenuItemsByVendor = async (req, res) => {
             where: {
                 ...whereClause
             },
-            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category'],
+            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category', 'maxQuantity', 'totalAvailable'],
         });
         return successResponse({ res, data: menuItems });
     } catch (error) {

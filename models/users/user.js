@@ -76,6 +76,7 @@ const User = sequelize.define('user', {
     timestamps: true,
 });
 
+User.belongsTo(Building, {foreignKey: 'buildingId'});
 
 module.exports = User;
 

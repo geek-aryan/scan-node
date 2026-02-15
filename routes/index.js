@@ -9,5 +9,6 @@ router.use('/vendor', require('./vendor/vendorRoutes'));
 router.use('/vendor-offer', require('./vendor/vendorOfferRoutes'));
 router.use('/user-cart', require('./order/userCartRoutes'));
 router.use('/vendor-menu-item', require('./vendor/vendorMenuItemRoutes'));
+router.use('/global-settings', require('./settings/globalSettingRoutes'));
 
 module.exports = router;

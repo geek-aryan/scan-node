@@ -1,11 +1,15 @@
 const Vendor = require('../../models/vendor/vendor');
 const { successResponse, errorResponse } = require('../../utils/responseUtils');
-const { fn, col, literal } = require('sequelize');
+const { fn, col, literal, Op } = require('sequelize');
 const VendorMenuItems = require('../../models/vendor/vendorMenu');
 const VendorGallery = require('../../models/vendor/vendorGallery');
 const VendorOfferMapping = require('../../models/vendor/vendorOfferMapping');
 const VendorOffer = require('../../models/vendor/vendorOffer');
 const UserCart = require('../../models/order/userCart');
+const Otp = require('../../models/otps/otp');
+const { OTP_TYPE, OTP_PAGE } = require('../../utils/enums/otpEnums');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 
 const addVendor = async (req, res) => {
@@ -47,26 +51,257 @@ const updateVendor = async (req, res) => {
   }
 };
 
+const generateVendorRegisterOtp = async (req, res) => {
+    try {
+        const {phone, email, otpType} = req.body;
+        const currentTime = new Date();
+        let whereClause = {
+            expiresAt: {
+                [Op.gte]: currentTime,
+            },
+            isVerified: 0,
+            otpType,
+            forPage: OTP_PAGE.VENDOR_OTP_FOR_REGISTRATION,
+        };
+        if(otpType === OTP_TYPE.PHONE){
+            whereClause.phoneNumber = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            whereClause.email = email;
+        }else{
+            return errorResponse({res, error: 'Invalid OTP type!', status: 422});
+        }
+        const alreadyOtps = await Otp.count({
+            where: {...whereClause }
+        });
+        if(alreadyOtps >= 5){
+            return errorResponse({res, error: 'Otp Limit Reached!', status: 429});
+            // return res.status(400).json({ message: 'Otp Limit Reached!' });
+        }
+        // const otp = generateNDigitsOTP(6);
+        const otp = '123456';
+        const otpValidityMinutes = 10;
+        let otpData = {};
+        if(otpType === OTP_TYPE.PHONE){
+            otpData.phoneNumber = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            otpData.email = email;
+        }
+        await Otp.create({
+            ...otpData,
+            otp: otp,
+            otpType: otpType,
+            forPage: OTP_PAGE.VENDOR_OTP_FOR_REGISTRATION,
+            expiresAt: new Date(Date.now() + otpValidityMinutes * 60 * 1000)
+        });
+        
+        return successResponse({res, message: 'Otp sent successfully'});
+        // return res.status(200).json({message: 'otp sent successfully'});
+        
+    }catch(error){
+        console.log(error);
+        // res.status(400).json(error);
+        return errorResponse({res, error, status: 400});
+    }
+};
+
+const verifyVendorRegisterOtp = async (req, res) => {
+    try {
+        const {phone, email, otp, otpType} = req.body;
+        let whereClause = {
+            otp,
+            expiresAt: {
+                [Op.gte]: new Date(),
+            },
+            isVerified: 0,
+            otpType,
+            forPage: OTP_PAGE.VENDOR_OTP_FOR_REGISTRATION,
+        };
+        let checkAlreadyVendor = {};
+
+        if(otpType === OTP_TYPE.PHONE){
+            whereClause.phoneNumber = phone;
+            checkAlreadyVendor.phone = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            whereClause.email = email;
+            checkAlreadyVendor.email = email;
+        }else{
+            return errorResponse({res, error: 'Invalid OTP type!', status: 422});
+        }
+        const alreadyVendor = await Vendor.findOne({
+            where: checkAlreadyVendor
+        });
+        if(alreadyVendor)return errorResponse({res, error: 'Vendor already exists with this phone number/email!', status: 409});
+        const verifyOtp = await Otp.findOne({
+            where: whereClause
+        });
+        if(!verifyOtp)return errorResponse({res, error: 'Invalid OTP', status: 400});
+
+        await verifyOtp.update({isVerified: 1});
+        const image = req.file ? req.file.filename : "";
+        const password = req.body.password ? req.body.password : null;
+        if(password){
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            req.body.password = hashedPassword;
+        }
+        const vendor = await Vendor.create({
+            phone: phone,
+            email: email,
+            image: image,
+            ...req.body
+        });
+        const token = jwt.sign({id: vendor.id, phone: vendor.phone, email: vendor.email, role: 'vendor'}, process.env.VENDOR_AUTH_SECRET_KEY, {expiresIn: '30d'});
+        const extraObj = { token };
+        const dataObj = { id: vendor.id, phone: vendor.phone, email: vendor.email, role: 'vendor' };
+
+        
+        return successResponse({res, data: dataObj, extraObj, message: 'Vendor verified successfully'});
+    }catch(error){
+        console.log(error);
+        return errorResponse({res, error, status: 400});
+    }
+};
+
+const generateForgotVendorPasswordOtp = async (req, res) => {
+    try {
+        const {phone, email, otpType} = req.body;
+        let whereClause = {
+            expiresAt: {
+                [Op.gte]: new Date(),
+            },
+            isVerified: 0,
+            otpType
+        };
+        if(otpType === OTP_TYPE.PHONE){
+            whereClause.phoneNumber = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            whereClause.email = email;
+        }else{
+            return errorResponse({res, error: 'Invalid OTP type!', status: 422});
+        }
+        const alreadyVendor = await Vendor.findOne({
+            where: otpType === OTP_TYPE.PHONE ? { phone: phone } : { email }
+        });
+        if(!alreadyVendor)return errorResponse({res, error: 'Vendor not found with this phone number/email!', status: 404});
+        
+        // const otp = generateNDigitsOTP(6);
+        const otp = '123456';
+        const otpValidityMinutes = 10;
+        let otpData = {};
+        if(otpType === OTP_TYPE.PHONE){
+            otpData.phoneNumber = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            otpData.email = email;
+        }
+        await Otp.create({
+            ...otpData,
+            otp: otp,
+            otpType: otpType,
+            forPage: OTP_PAGE.VENDOR_FORGOT_PASSWORD,
+            expiresAt: new Date(Date.now() + otpValidityMinutes * 60 * 1000)
+        });
+        
+        return successResponse({res, message: 'Otp sent successfully'});
+    }catch(error){
+        console.log(error);
+        return errorResponse({res, error, status: 400});
+    }
+};
+
+const verifyForgotVendorPasswordOtp = async (req, res) => {
+    try {
+        const {phone, email, otp, otpType, newPassword} = req.body;
+        let whereClause = {
+            otp,
+            expiresAt: {
+                [Op.gte]: new Date(),
+            },
+            isVerified: 0,
+            otpType,
+            forPage: OTP_PAGE.VENDOR_FORGOT_PASSWORD,
+        };
+        let checkAlreadyVendor = {};
+
+        if(otpType === OTP_TYPE.PHONE){
+            whereClause.phoneNumber = phone;
+            checkAlreadyVendor.phone = phone;
+        }else if(otpType === OTP_TYPE.EMAIL){
+            whereClause.email = email;
+            checkAlreadyVendor.email = email;
+        }else{
+            return errorResponse({res, error: 'Invalid OTP type!', status: 422});
+        }
+        const alreadyVendor = await Vendor.findOne({
+            where: checkAlreadyVendor,
+          
+        });
+        if(!alreadyVendor)return errorResponse({res, error: 'Vendor not found with this phone number/email!', status: 404});
+        
+        const verifyOtp = await Otp.findOne({
+            where: whereClause
+        });
+        if(!verifyOtp)return errorResponse({res, error: 'Invalid OTP', status: 400});
+
+        await verifyOtp.update({isVerified: 1});
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+
+        await alreadyVendor.update({password: hashedPassword});
+        const token = jwt.sign({id: alreadyVendor.id, phone: alreadyVendor.phone, email: alreadyVendor.email, role: 'vendor'}, process.env.VENDOR_AUTH_SECRET_KEY, {expiresIn: '30d'});
+        const extraObj = { token };
+        const dataObj = { id: alreadyVendor.id, phone: alreadyVendor.phone, email: alreadyVendor.email, role: 'vendor' };
+
+        
+        return successResponse({res, data: dataObj, extraObj, message: 'Vendor password updated successfully'});
+    }catch(error){
+        console.log(error);
+        return errorResponse({res, error, status: 400});
+    }
+};
+
+const vendorLogin = async (req, res) => {
+    try {
+        const { phone, password, email } = req.body;
+        const whereClause = phone ? { phone } : email ? { email } : null;
+        const vendor = await Vendor.findOne({ where: whereClause,  });
+        if (!vendor) {
+            return errorResponse({ res, error: 'Vendor not found with this phone number/email!', status: 404 });
+        }
+        const isPasswordValid = await bcrypt.compare(password, vendor.password);
+        if (!isPasswordValid) {
+            return errorResponse({ res, error: 'Invalid password!', status: 401 });
+        }
+        const token = jwt.sign({ id: vendor.id, phone: vendor.phone, email: vendor.email, role: 'vendor' }, process.env.VENDOR_AUTH_SECRET_KEY, { expiresIn: '30d' });
+        const extraObj = { token };
+        const dataObj = { id: vendor.id, phone: vendor.phone, email: vendor.email, role: 'vendor' };
+        return successResponse({ res, data: dataObj, extraObj, message: 'Vendor logged in successfully' });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error, status: 400 });
+    }
+};
+
 const getVendorById = async (req, res) => {
   try {
     const { id } = req.params;
     const vendor = await Vendor.findByPk(id, {
-      attributes: [
-        'id',
-        'title',
-        'shopName',
-        'image',
-        'isOfferAvalailable',
-        'averageRating',
-        'reviewCount',
-        'description',
-        'address',
-        'phone',
-        'whatsappNumber',
-        'timings',
-        'websiteLink',
-        'otherLink'
-      ]
+      // attributes: [
+      //   'id',
+      //   'title',
+      //   'shopName',
+      //   'image',
+      //   'isOfferAvalailable',
+      //   'averageRating',
+      //   'reviewCount',
+      //   'description',
+      //   'address',
+      //   'phone',
+      //   'whatsappNumber',
+      //   'timings',
+      //   'websiteLink',
+      //   'otherLink'
+      // ]
     });
     if (!vendor) {
       return errorResponse({ res, error: 'Vendor not found', status: 404 });
@@ -255,8 +490,8 @@ const getVendorInfoById = async (req, res) => {
         attributes: ['id', 'shopName'],
       }],
     });
-
     const menuItemsWithQuantity = await Promise.all(menuItems.map(async (item) => {
+      // console.log('menuItems', req.user, item);
       const buyQuantity = await UserCart.findOne({
         where: {
           userId: req.user.id,
@@ -310,16 +545,107 @@ const addVendorGalleryImage = async (req, res) => {
   }
 };
 
+const getAllVendorGalleryImagesByVendorId = async (req, res) => {
+    try {
+        const { vendorId } = req.params;
+        const galleryImages = await VendorGallery.findAll({
+            where: { vendorId },
+            attributes: ['id', 'image', 'vendorId'],
+            order: [['createdAt', 'DESC']],
+        });
+        return successResponse({ res, data: galleryImages, message: 'Vendor gallery images fetched successfully', status: 200 });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error });
+    }
+};
+
+
+const updateVendorGalleryImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const image = req.file ? req.file.filename : null;
+    if (image) {
+      req.body.image = image;
+    }
+    const galleryImage = await VendorGallery.findByPk(id);
+    if (!galleryImage) return errorResponse({ res, error: 'Gallery image not found!', status: 404 });
+    await galleryImage.update(req.body);
+    return successResponse({ res, data: galleryImage, message: 'Vendor gallery image updated successfully', status: 200 });
+  } catch (error) {
+    console.log(error);
+    return errorResponse({ res, error });
+  }
+};
+
+const deleteVendorGalleryImage = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const galleryImage = await VendorGallery.findByPk(id);
+        if (!galleryImage) return errorResponse({ res, error: 'Gallery image not found!', status: 404 });
+        await galleryImage.destroy();
+        return successResponse({ res, message: 'Vendor gallery image deleted successfully', status: 200 });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error });
+    }
+};
+
+const getVendorDashboard = async (req, res) => {
+  try {
+    const { id } = req.user;
+    const totalOrders = 10;
+    const totalEarnings = 1000;
+    const totalMenuItems = await VendorMenuItems.count({
+      where: {
+        vendorId: id
+      }
+    });
+    const totalGalleryImages = await VendorGallery.count({
+      where: {
+        vendorId: id
+      }
+    });
+    const averageRatings = 4.2;
+    const dataObj = {
+      totalOrders,
+      totalEarnings,
+      totalMenuItems,
+      totalGalleryImages,
+      averageRatings
+    };
+    return successResponse({res,  data: dataObj, message: 'Vendor dashboard fetched successfully', status: 200});
+
+  } catch (error) {
+    console.log(error);
+    // res.status(400).json(error);
+    return errorResponse({ res, error, status: 400 });
+  }
+};
+
 
 
 
 module.exports = {
   addVendor,
   updateVendor,
+  generateForgotVendorPasswordOtp,
+  verifyForgotVendorPasswordOtp,
+  vendorLogin,
+  generateVendorRegisterOtp,
+  verifyVendorRegisterOtp,
   getVendorById,
   getAllVendors,
   getNearByVendorsByCategoryId,
   getVendorInfoById,
   addVendorMenu,
-  addVendorGalleryImage
+
+  
+  addVendorGalleryImage,
+  getAllVendorGalleryImagesByVendorId,
+  updateVendorGalleryImage,
+  deleteVendorGalleryImage,
+
+
+  getVendorDashboard
 };

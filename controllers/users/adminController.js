@@ -1,7 +1,9 @@
 const Admin = require('../../models/users/admin');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { successResponse } = require('../../utils/responseUtils');
+const { successResponse, errorResponse } = require('../../utils/responseUtils');
+const Vendor = require('../../models/vendor/vendor');
+const User = require('../../models/users/user');
 
 const adminLogin = async (req, res)=> {
     try {
@@ -24,6 +26,30 @@ const adminLogin = async (req, res)=> {
 };
 
 
+const adminDashboard = async (req, res) => {
+    try {
+      const totalOrders = 10;
+      const totalVendors = await Vendor.count();
+      const totalRevenue = 10000;
+      const totalUsers = await User.count();
+
+
+      const dataObj = {
+        totalOrders,
+        totalVendors,
+        totalRevenue,
+        totalUsers
+      };
+      return successResponse({res, data: dataObj});
+    } catch (error) {
+        console.log(error);
+        // res.status(400).json(error);
+        return errorResponse({res, error});
+    }
+};
+
+
 module.exports = {
-    adminLogin
+    adminLogin,
+    adminDashboard
 }

@@ -30,6 +30,41 @@ const updateVendorOffer = async (req, res) => {
     }
 };
 
+const getAllVendorOffers = async (req, res) => {
+    try {
+        // const offers = await VendorOffer.findAll({
+        //     // attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill'],
+        //     order: [['sequenceNo', 'ASC']],
+        // });
+
+        const vendorOfferMaps = await VendorOfferMapping.findAll({
+            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill']}]
+        })
+        return successResponse({ res, data: vendorOfferMaps, message: 'Vendor Offers fetched successfully' });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error, status: 400 });
+    }
+};
+
+const getAllOffersByVendorId = async (req, res) => {
+    try {
+        const { vendorId } = req.params;
+        const vendorOfferMaps = await VendorOfferMapping.findAll({
+            where: {
+                vendorId,
+                // status: true,
+            },
+            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill']}]
+        });
+        return successResponse({ res, data: vendorOfferMaps, message: 'Vendor Offers fetched successfully' });
+    } catch (error) {
+        console.log(error);
+        return errorResponse({ res, error, status: 400 });
+    }
+};
+
+
 const getVendorOfferById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -250,6 +285,8 @@ const searchVendorOffers = async (req, res) => {
 module.exports = {
     createVendorOffer,
     updateVendorOffer,
+    getAllVendorOffers,
+    getAllOffersByVendorId,
     getVendorOfferById,
     mapOfferToVendors,
     getOffersByOfferCategory,

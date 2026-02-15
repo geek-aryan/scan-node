@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const userController = require('../../controllers/users/userController');
-const { userAuth } = require('../../middlewares/auth');
+const { userAuth, adminAuth } = require('../../middlewares/auth');
 
 
 const createUploader = require('../../middlewares/multer');
@@ -32,5 +32,7 @@ router.post('/upload-photo', userAuth, uploadUserProfileImage.single('image'), u
 router.post('/add-update-user-address-by-category', userAuth, userController.addUpdateUserAddressByAddressCategory);
 router.get('/user-address-by-category', userAuth, userController.getUserAddressByAddressCategory);
 router.delete('/delete-user-account', userAuth, userController.deleteUserAccount);
+router.get('/get-all-users', adminAuth, userController.getAllusers);
+
 
 module.exports = router;

@@ -8,5 +8,7 @@ router.get('/verify-admin', adminAuth, (req, res)=> {
     res.status(200).json({message: 'verified!'});
 })
 
+router.get('/admin-dashboard', adminAuth, adminController.adminDashboard);
+
 
 module.exports = router;

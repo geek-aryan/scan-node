@@ -2,6 +2,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/dbConfig');
 const User = require('../users/user');
 const VendorMenuItems = require('../vendor/vendorMenu');
+const Vendor = require('../vendor/vendor');
 
 const UserCart = sequelize.define('user_cart_item', {
     id: {
@@ -14,6 +15,14 @@ const UserCart = sequelize.define('user_cart_item', {
         allowNull: false,
         references: {
             model: User,
+            key: 'id'
+        }
+    },
+    vendorId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Vendor,
             key: 'id'
         }
     },
@@ -35,6 +44,9 @@ const UserCart = sequelize.define('user_cart_item', {
 
 UserCart.belongsTo(User, { foreignKey: 'userId' });
 UserCart.belongsTo(VendorMenuItems, { foreignKey: 'menuItemId' });
+
+UserCart.belongsTo(Vendor, { foreignKey: 'vendorId' });
+
 
 
 module.exports = UserCart;

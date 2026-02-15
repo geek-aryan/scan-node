@@ -41,5 +41,57 @@ const userAuth = async (req, res, next) => {
     }
 };
 
+const vendorAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        // console.log(token, authHeader);
+        if(!token)return res.sendStatus(401);
+        jwt.verify(token, process.env.VENDOR_AUTH_SECRET_KEY, (err, user)=>{
+            if(err){
+                return res.status(403).json({msg: "jwt verification failed"});
+            }
+            // console.log(user);
+            req.user = user;
+            // console.log(user, "user");
+            next();
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+};
 
-module.exports = {adminAuth, userAuth};
+
+const adminOrVendorAuth = (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) return res.sendStatus(401);
+
+        // Try Admin token
+        try {
+            const adminUser = jwt.verify(token, process.env.ADMIN_AUTH_SECRET_KEY);
+            req.user = { ...adminUser, role: "admin" };
+            return next();
+        } catch (err) {}
+
+        // Try Vendor token
+        try {
+            const vendorUser = jwt.verify(token, process.env.VENDOR_AUTH_SECRET_KEY);
+            req.user = { ...vendorUser, role: "vendor" };
+            return next();
+        } catch (err) {}
+
+        return res.status(403).json({ msg: "jwt verification failed" });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+};
+
+
+
+module.exports = {adminAuth, userAuth, vendorAuth, adminOrVendorAuth};

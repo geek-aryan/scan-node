@@ -10,6 +10,7 @@ const { OTP_TYPE, OTP_PAGE } = require("../../utils/enums/otpEnums");
 const jwt = require('jsonwebtoken');
 const { errorResponse, successResponse, correctImagePath } = require("../../utils/responseUtils");
 const UserAddress = require("../../models/users/userAddress");
+const Building = require("../../models/building");
 
 
 const generateMobileRegisterOtp = async (req, res) => {
@@ -242,6 +243,20 @@ const deleteUserAccount = async (req, res) => {
 };
 
 
+const getAllusers = async (req, res) => {
+    try {
+        const users = await User.findAll({
+            order: [['id', 'DESC']],
+            include: [{model: Building}]
+        });
+        return successResponse({res, message: 'User Fetched Successfully!', data: users});
+    } catch (error) {
+        console.log('error', error);
+        res.status(400).json(error);
+    }
+};
+
+
 const userController = {
     generateMobileRegisterOtp,
     verifyUserWithMobileOtp,
@@ -252,7 +267,8 @@ const userController = {
     uploadPhoto,
     addUpdateUserAddressByAddressCategory,
     getUserAddressByAddressCategory,
-    deleteUserAccount
+    deleteUserAccount,
+    getAllusers
 };
 
 module.exports = userController;

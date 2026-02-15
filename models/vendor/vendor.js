@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../../config/dbConfig'); // Assuming you have your sequelize instance in a file named 'sequelize.js'
 const VendorCategory = require('./vendorCategory'); // Import the VendorCategory model
+const Building = require('../building'); // Import the Building model
 
 const Vendor = sequelize.define('vendor', {
   id: {
@@ -85,6 +86,25 @@ const Vendor = sequelize.define('vendor', {
     // validate: {
     //   isEmail: true,
     // },
+  },
+  buildingId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: Building,
+      key: 'id',
+    },
+  },
+  adminVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  isPaymentOnline: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: 0
+  },
+  password: {
+    type: DataTypes.STRING,
+    // allowNull: false,
   },
   status: {
     type: DataTypes.BOOLEAN,
