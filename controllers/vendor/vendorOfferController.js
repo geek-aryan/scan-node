@@ -38,7 +38,7 @@ const getAllVendorOffers = async (req, res) => {
         // });
 
         const vendorOfferMaps = await VendorOfferMapping.findAll({
-            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill']}]
+            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone', 'status', 'adminVerified']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill', 'status']}]
         })
         return successResponse({ res, data: vendorOfferMaps, message: 'Vendor Offers fetched successfully' });
     } catch (error) {
@@ -55,7 +55,7 @@ const getAllOffersByVendorId = async (req, res) => {
                 vendorId,
                 // status: true,
             },
-            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill']}]
+            include: [{model: Vendor, attributes: ['id', 'shopName', 'email', 'phone', 'status', 'adminVerified']}, {model: VendorOffer, attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill', 'status']}]
         });
         return successResponse({ res, data: vendorOfferMaps, message: 'Vendor Offers fetched successfully' });
     } catch (error) {
@@ -125,10 +125,10 @@ const getOffersByOfferCategory = async (req, res) => {
             attributes: ['id', 'vendorId', 'offerId'],
             include: [{
                 model: Vendor,
-                attributes: ['id', 'shopName'],
+                attributes: ['id', 'shopName', 'status', 'adminVerified'],
             }, {
                 model: VendorOffer,
-                attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill'],
+                attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill', 'status'],
             }],
         });
         return successResponse({ res, data: mappings, message: 'Offers fetched successfully' });
@@ -174,6 +174,7 @@ const getVendorsByOfferId = async (req, res) => {
                     'isOfferAvalailable',
                     'averageRating',
                     'reviewCount',
+                    'adminVerified',
                     [
                         literal("ST_Distance_Sphere(POINT(longitude, latitude), POINT(" + lng + ", " + lat + ")) / 1000"),
                         'distance'
@@ -195,7 +196,8 @@ const getVendorsByOfferId = async (req, res) => {
                     'image',
                     'isOfferAvalailable',
                     'averageRating',
-                    'reviewCount'
+                    'reviewCount',
+                    'adminVerified',
                 ],
                 order: [['averageRating', 'DESC']],
                 // limit: 10
@@ -267,7 +269,7 @@ const searchVendorOffers = async (req, res) => {
             attributes: ['id', 'vendorId', 'offerId'],
             include: [{
                 model: Vendor,
-                attributes: ['id', 'shopName'],
+                attributes: ['id', 'shopName', 'status', 'adminVerified'],
             }, {
                 model: VendorOffer,
                 attributes: ['id', 'offerType', 'offerCategory', 'offerTitle', 'offerDescription', 'termAndCondition', 'offerValidityTill'],

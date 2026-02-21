@@ -118,6 +118,7 @@ const getUserCartV2 = async (req, res) => {
                         'category',
                         'maxQuantity',
                         'totalAvailable',
+                        // 'status',
                         [
                             literal(`
                                 CASE
@@ -137,7 +138,7 @@ const getUserCartV2 = async (req, res) => {
                 },
                 {
                     model: Vendor,
-                    attributes: ['id', 'shopName', 'phone', 'email', 'image']
+                    attributes: ['id', 'shopName', 'phone', 'email', 'image', 'whatsappNumber', 'isPaymentOnline', 'adminVerified', 'status']
                 }
             ],
             attributes: ['id', 'vendorId', 'menuItemId', 'quantity'],
@@ -316,7 +317,7 @@ const getUserCartByVendorId = async (req, res) => {
                 },
                 {
                     model: Vendor,
-                    attributes: ['id', 'shopName', 'phone', 'email', 'image']
+                    attributes: ['id', 'shopName', 'phone', 'email', 'image', 'whatsappNumber', 'isPaymentOnline', 'adminVerified']
                 }
             ],
             attributes: ['id', 'vendorId', 'menuItemId', 'quantity'],
@@ -377,11 +378,11 @@ const getUserCartByVendorId = async (req, res) => {
     }
 };
 
+
 module.exports = {
     addRemoveUserCartItem,
     getUserCart,
     getUserCartV2,
     getUserCheckoutCart,
     getUserCartByVendorId,
-
-}
+};

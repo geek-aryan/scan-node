@@ -3,6 +3,7 @@ const Vendor = require("../../models/vendor/vendor");
 
 const { errorResponse, successResponse, correctImagePath } = require("../../utils/responseUtils");
 
+
 const getMenuItemsByCategory = async (req, res) => {
     try {
         const { category } = req.query;
@@ -14,11 +15,11 @@ const getMenuItemsByCategory = async (req, res) => {
             where: {
                 ...whereClause
             },
-            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category'],
+            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category', 'status'],
             include: [
                 {
                     model: Vendor,
-                    attributes: ['id', 'shopName', 'whatsappNumber']
+                    attributes: ['id', 'shopName', 'whatsappNumber', 'status', 'adminVerified']
                 }
             ]
         });
@@ -40,7 +41,7 @@ const getMenuItemsByVendor = async (req, res) => {
             where: {
                 ...whereClause
             },
-            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category', 'maxQuantity', 'totalAvailable'],
+            attributes: ['id', 'vendorId', 'itemName', 'itemDescription', 'markedPrice', 'sellingPrice', 'discountValue', 'discountPercentage', 'image', 'isAvailable', 'category', 'maxQuantity', 'totalAvailable', 'status'],
         });
         return successResponse({ res, data: menuItems });
     } catch (error) {
@@ -56,9 +57,11 @@ const updateMenuItem = async (req, res) => {
         if (image) {
             req.body.image = image;
         }
+        
         const menuItem = await VendorMenuItems.findByPk(id);
         if (!menuItem) return errorResponse({ res, error: 'Menu item not found!', status: 404 });
         await menuItem.update(req.body);
+
         return successResponse({ res, data: menuItem, message: 'Menu item updated successfully' });
     } catch (error) {
         console.log(error);

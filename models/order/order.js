@@ -108,5 +108,10 @@ const Order = sequelize.define('order', {
 
 }, { timestamps: true });
 
+Order.belongsTo(User, {foreignKey: 'userId'});
+Order.belongsTo(Vendor, {foreignKey: 'vendorId'});
+
+
+
 
 module.exports = Order;

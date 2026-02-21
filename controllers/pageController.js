@@ -1,4 +1,4 @@
-const { Sequelize, fn, col, literal } = require('sequelize');
+const { Sequelize, fn, col, literal, Op } = require('sequelize');
 const Vendor = require('../models/vendor/vendor');
 const VendorCategory = require('../models/vendor/vendorCategory');
 const { successResponse, errorResponse } = require('../utils/responseUtils');
@@ -6,6 +6,7 @@ const AboutUs = require('../models/pages/aboutUs');
 const HelpAndSupport = require('../models/pages/helpAndSupport');
 const HtmlPage = require('../models/pages/htmlPages');
 const User = require('../models/users/user');
+const Announcement = require('../models/pages/announcement');
 
 
 const getHomePageData = async (req, res) => {
@@ -219,6 +220,101 @@ const getHtmlPageContent = async (req, res) => {
   }
 };
 
+const addAnnouncement = async (req, res) => {
+  try {
+    const body = req.body;
+    const image = req.file ? req.file.filename : null;
+    if (image) {
+      body.image = image;
+    }
+    const announcement = await Announcement.create({ ...body });
+    return successResponse({ res, data: announcement, message: 'Announcement added successfully', status: 200 });
+  }
+  catch(error){
+    console.log(error);
+    return errorResponse({ res, error });
+  }
+};
+
+const updateAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const image = req.file ? req.file.filename : null;
+    if (image) {
+      body.image = image;
+    }
+    const announcement = await Announcement.findByPk(id);
+    if (!announcement) return errorResponse({ res, error: 'Announcement not found!', status: 404 });
+    await announcement.update(body);
+    return successResponse({ res, data: announcement, message: 'Announcement updated successfully', status: 200 });
+  }catch(error){
+    console.log(error);
+    return errorResponse({ res, error });
+  }
+};
+
+const getAllAnnouncements = async (req, res) => {
+  try {
+    const announcements = await Announcement.findAll();
+    return successResponse({ res, data: announcements, message: 'Announcements fetched successfully', status: 200 });
+  }
+  catch(error){
+    console.log(error);
+    return errorResponse({ res, error });
+  }
+};
+
+const deleteAnnouncement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const announcement = await Announcement.findByPk(id);
+    if(!announcement)return errorResponse({res, error: 'Announcement not found!', status: 404});
+    await announcement.destroy();
+    return successResponse({ res, message: 'Announcement deleted successfully', status: 200 });
+  }
+  catch(error){
+    console.log(error);
+    return res.status(400).json({error});
+  }
+};
+
+const getAnnouncementById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const announcement = await Announcement.findByPk(id);
+    if(!announcement)return res.status(200).json({message: 'Announcement not found!'});
+    return successResponse({ res, data: announcement, message: 'Announcement fetched successfully', status: 200 });
+  }
+  catch(error){
+    console.log(error);
+    return res.status(400).json({error});
+  }
+};
+
+const getValidAnnouncements = async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const announcements = await Announcement.findAll({
+      where: {
+        shownFrom: {
+          [Op.lte]: currentDate,
+        },
+        shownTill: {
+          [Op.gte]: currentDate,
+        },
+      },
+    });
+    return successResponse({ res, data: announcements, message: 'Valid Announcements fetched successfully', status: 200 });
+  }
+  catch(error){
+    console.log(error);
+    return errorResponse({ res, error });
+  }
+};
+
+
+
 module.exports = {
     getHomePageData,
     addUpdateAboutUs,
@@ -226,5 +322,11 @@ module.exports = {
     addUpdateHelpAndSupport,
     getHelpAndSupport,
     addUpdateHtmlPageContent,
-    getHtmlPageContent
+    getHtmlPageContent,
+    addAnnouncement,
+    updateAnnouncement,
+    deleteAnnouncement,
+    getAllAnnouncements,
+    getAnnouncementById,
+    getValidAnnouncements,
 };

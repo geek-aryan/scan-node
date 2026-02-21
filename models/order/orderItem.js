@@ -61,4 +61,14 @@ const OrderItem = sequelize.define('order_item', {
 
 }, { timestamps: true });
 
+
+OrderItem.belongsTo(Order, {foreignKey: 'orderId'});
+OrderItem.belongsTo(Vendor, {foreignKey: 'vendorId'});
+OrderItem.belongsTo(VendorMenuItems, {foreignKey: 'menuItemId'});
+
+Order.hasMany(OrderItem, {foreignKey: 'orderId'});
+Vendor.hasMany(OrderItem, {foreignKey: 'vendorId'});
+VendorMenuItems.hasMany(OrderItem, {foreignKey: 'menuItemId'});
+
+
 module.exports = OrderItem;

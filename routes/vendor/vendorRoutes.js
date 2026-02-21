@@ -21,13 +21,14 @@ const uploadVendorImage = createUploader({
 
 router.post('/add-vendor', adminAuth, uploadVendorImage.single('image'), vendorController.addVendor);
 router.put('/update-vendor/:id', adminAuth, uploadVendorImage.single('image'), vendorController.updateVendor);
+router.put('/vendor-profile-update', vendorAuth, uploadVendorImage.single('image'), vendorController.vendorProfileUpdate);
 router.post('/generate-vendor-register-otp', vendorController.generateVendorRegisterOtp);
 router.post('/verify-vendor-register-otp', uploadVendorImage.single('image'), vendorController.verifyVendorRegisterOtp);
 router.post('/generate-forgot-vendor-password-otp', vendorController.generateForgotVendorPasswordOtp);
 router.post('/verify-forgot-vendor-password-otp', vendorController.verifyForgotVendorPasswordOtp);
 router.post('/vendor-login', vendorController.vendorLogin);
 router.get('/get-vendor-by-id/:id', vendorController.getVendorById);
-router.get('/get-all-vendors', vendorController.getAllVendors);
+router.get('/get-all-vendors', adminAuth, vendorController.getAllVendors);
 router.get('/get-nearby-vendors-by-category-id', vendorController.getNearByVendorsByCategoryId);
 router.get('/get-vendor-details-by-id', userAuth, vendorController.getVendorInfoById);
 router.post('/add-vendor-menu', adminOrVendorAuth, uploadVendorImage.single('image'), vendorController.addVendorMenu);
